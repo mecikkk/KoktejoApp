@@ -5,6 +5,11 @@ import 'package:koktejo/models/cocktail_model.dart';
 
 class CardList extends StatelessWidget {
 
+  final List<CocktailModel> _cocktails;
+
+
+  CardList(this._cocktails);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -18,40 +23,29 @@ class CardList extends StatelessWidget {
           Container(
             padding: EdgeInsets.only(right: 15.0),
             width: MediaQuery.of(context).size.width - 30.0,
-            height: MediaQuery.of(context).size.width,
-            child: GridView.count(crossAxisCount: 2,
-            primary: false,
-            crossAxisSpacing: 10.0,
-            mainAxisSpacing: 15.0,
-            childAspectRatio: 0.8,
-            children: <Widget>[
-
-              _buildCardView(CocktailModel('idd', 'Koktail2 bla bla bla', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123), false, context),
-              _buildCardView(CocktailModel('idd', 'Koktail2dddsdfsdfsdfsdfsdf', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123), true, context),
-              _buildCardView(CocktailModel('idd', 'Kopa labama drinkos alabama, heca kieca', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123), true, context),
-              _buildCardView(CocktailModel('idd', 'Koktail2', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123), false, context),
-              _buildCardView(CocktailModel('idd', 'Koktail2', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123), true, context),
-              _buildCardView(CocktailModel('idd', 'Koktail2', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123), false, context),
-              _buildCardView(CocktailModel('idd', 'Koktail2', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123), false, context),
-
-
-
-            ],),
+            height: MediaQuery.of(context).size.height - (MediaQuery.of(context).size.height * 0.29),
+            child: GridView.count(
+              crossAxisCount: 2,
+              primary: false,
+              crossAxisSpacing: 10.0,
+              mainAxisSpacing: 15.0,
+              childAspectRatio: 0.8,
+              children: _buildAllCards(context)),
           )
 
         ],
       ),
     );
   }
-
-  buildTabContext(int count, List<CocktailModel> cocktails) => Container(
-    child: ListView.builder(
-        physics: const ClampingScrollPhysics(),
-        itemCount: count,
-        itemBuilder: (BuildContext context, int index) {
-          return _buildCardView(cocktails[index], true, context);
-        }),
-  );
+  
+  List<Widget> _buildAllCards(BuildContext context) {
+    List<Widget> widgets = List<Widget>();
+    
+    for(CocktailModel cocktail in _cocktails) {
+      widgets.add(_buildCardView(cocktail, true, context));
+    }
+    return widgets;
+  }
 
   Widget _buildCardView(CocktailModel cocktail, bool isFavourite, context) {
     return Padding(
@@ -118,7 +112,7 @@ class CardList extends StatelessWidget {
               ),
             ),
             Positioned(
-              bottom: 5,
+              bottom: 7,
               left: 0,
               right: 0,
               child: Container(
@@ -135,7 +129,7 @@ class CardList extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 16.0,
+                      fontSize: 14.0,
                     ),
                   ),
                 ),
@@ -147,57 +141,5 @@ class CardList extends StatelessWidget {
     );
   }
 
-  Widget _buildCard(String name, String imgUrl, bool isFavourite, context) {
-
-    return Padding(
-      padding: EdgeInsets.only(top: 15.0, bottom: 5.0, left: 5.0, right: 5.0),
-      child: InkWell(
-        onTap: () {},
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15.0),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.2),
-                spreadRadius: 3.0,
-                blurRadius: 5.0
-              )
-            ],
-            color: Colors.white70,
-          ),
-          child: Column(
-            children: <Widget>[
-              Padding(
-                padding: EdgeInsets.all(5.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: <Widget>[
-                    isFavourite ? Icon(Icons.favorite, color: mAccentColor) :
-                        Icon(Icons.favorite_border, color: mAccentColor)
-                  ],
-                ),
-              ),
-              Hero(
-                tag: imgUrl,
-                child: Container(
-                  height: 100.0,
-                  width: 200.0,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage(imgUrl),
-                      fit: BoxFit.cover
-                    )
-                  ),
-                ),
-              ),
-
-              SizedBox(height: 7.0)
-            ],
-          ),
-        ),
-      ),
-    );
-
-  }
 
 }

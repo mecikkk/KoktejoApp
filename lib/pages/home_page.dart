@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:koktejo/constants.dart';
+import 'package:koktejo/models/cocktail_model.dart';
 import 'package:koktejo/widgets/card_list.dart';
 
 class HomePage extends StatefulWidget {
@@ -50,7 +51,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             Padding(
                 padding: EdgeInsets.only(left: 20.0),
                 child: Text('Koktajle',
-                    style: TextStyle(fontSize: 35.0, fontFamily: 'Varela', fontWeight: FontWeight.bold,), textAlign: TextAlign.left,)),
+                    style: TextStyle(fontSize: 35.0, fontWeight: FontWeight.bold,), textAlign: TextAlign.left)),
             SizedBox(height: 15.0),
             TabBar(
               controller: _tabController,
@@ -74,11 +75,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               child: TabBarView(
                 controller: _tabController,
                 children: <Widget>[
-                  CardList(),
-                  CardList(),
-                  CardList(),
-                  CardList(),
-                  CardList(),
+                  CardList(_dummyCocktailList()),
+                  CardList(_dummyCocktailList()),
+                  CardList(_dummyCocktailList()),
+                  CardList(_dummyCocktailList()),
+                  CardList(_dummyCocktailList()),
                 ],
               ),
             )
@@ -86,6 +87,20 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           ],
         )
     );
+  }
+
+  _dummyCocktailList() {
+    var cocktails = new List<CocktailModel>();
+    cocktails.add(CocktailModel('idd', 'Koktail1', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123));
+    cocktails.add(CocktailModel('idd', 'Koktail2 ', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123));
+    cocktails.add(CocktailModel('idd', 'Koktail3 bla bla bla', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123));
+    cocktails.add(CocktailModel('idd', 'Koktail4 bla bla bla', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123));
+    cocktails.add(CocktailModel('idd', 'Koktail5 bla bla bla', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123));
+    cocktails.add(CocktailModel('idd', 'Koktail2 bla bla bla', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123));
+    cocktails.add(CocktailModel('idd', 'Koktail67 bla bla bla', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123));
+    cocktails.add(CocktailModel('idd', 'Koktail2 bla bla bla', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123));
+
+    return cocktails;
   }
 
 
