@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:koktejo/constants.dart';
 import 'package:koktejo/pages/home_page.dart';
+import 'package:koktejo/providers/cocktails_info.dart';
+import 'package:provider/provider.dart';
 
 void main() => runApp(KoktejoApp());
 
@@ -10,19 +12,25 @@ class KoktejoApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Koktejo',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.light,
-        primarySwatch: Colors.blue,
-        cardColor: Colors.white70,
+        primaryColor: mAccentColor,
+        primaryColorBrightness: Brightness.light,
+        cardColor: Color.fromRGBO(240, 240, 240, 1.0),
         fontFamily: 'Varela'
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
-        accentColor: Colors.blue,
-        cardColor: Colors.black45,
+        primaryColor: mAccentColor,
+        primaryColorBrightness: Brightness.dark,
+        cardColor: Colors.black38,
           fontFamily: 'Varela'
       ),
-      home: HomePage(title: 'Koktejo'),
+      home: ChangeNotifierProvider(
+        create: (context) => CocktailsInfo(),
+        child: HomePage(title: 'Koktejo'),
+      )
     );
   }
 }

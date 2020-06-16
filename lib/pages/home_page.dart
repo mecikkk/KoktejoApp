@@ -1,8 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:koktejo/constants.dart';
+import 'package:koktejo/models/cocktail_category.dart';
 import 'package:koktejo/models/cocktail_model.dart';
+import 'package:koktejo/models/favourite_model.dart';
+import 'package:koktejo/pages/favourites_page.dart';
+import 'package:koktejo/providers/cocktails_info.dart';
+import 'package:koktejo/providers/database_provider.dart';
+import 'package:koktejo/providers/firestore_provider.dart';
 import 'package:koktejo/widgets/card_list.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key key, this.title}) : super(key: key);
@@ -13,13 +20,31 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   TabController _tabController;
+  final FirestoreProvider _firestore = new FirestoreProvider();
+  final DatabaseProvider _databaseProvider = DatabaseProvider();
+
+  List<CocktailCategory> _categories = List<CocktailCategory>();
+  List<CocktailModel> _myFavourites = List<CocktailModel>();
+
+  bool allDataReceived = false;
 
   @override
   void initState() {
+    var cocktailsInfo = Provider.of<CocktailsInfo>(context);
+
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 0, vsync: this);
+
+    _getCocktailsFromFirebase();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _categories.clear();
+    _myFavourites.clear();
   }
 
   @override
@@ -36,12 +61,16 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           title: Text(widget.title, style: TextStyle(fontFamily: 'Varela', fontSize: 20.0)),
           actions: <Widget>[
             IconButton(
-              icon: Icon(Icons.favorite_border),
-              onPressed: () {},
+              icon: Icon(Icons.favorite_border, color: mAccentColor),
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  return FavouritesPage(_myFavourites);
+                }));
+              },
             ),
           ],
         ),
-        body: Column (
+        body: !allDataReceived ? _showLoading() : Column (
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -50,7 +79,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             ),
             Padding(
                 padding: EdgeInsets.only(left: 20.0),
-                child: Text('Koktajle',
+                child: Text('Kategorie',
                     style: TextStyle(fontSize: 35.0, fontWeight: FontWeight.bold,), textAlign: TextAlign.left)),
             SizedBox(height: 15.0),
             TabBar(
@@ -61,26 +90,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               isScrollable: true,
               unselectedLabelColor: mDisabledAccentColor,
               labelPadding: EdgeInsets.only(right: 25.0),
-              tabs: <Widget>[
-                _createTab('Na śniadanie'),
-                _createTab('Odchudzające'),
-                _createTab('Pobudzające'),
-                _createTab('Oczyszczające'),
-                _createTab('Odmładzające')
-              ],
+              tabs: _createAllTabs(),
             ),
             Expanded(child : Container(
               height: 400,
               width: double.infinity,
               child: TabBarView(
                 controller: _tabController,
-                children: <Widget>[
-                  CardList(_dummyCocktailList()),
-                  CardList(_dummyCocktailList()),
-                  CardList(_dummyCocktailList()),
-                  CardList(_dummyCocktailList()),
-                  CardList(_dummyCocktailList()),
-                ],
+                children: _createCocktailList(),
               ),
             )
             )
@@ -89,20 +106,32 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     );
   }
 
-  _dummyCocktailList() {
-    var cocktails = new List<CocktailModel>();
-    cocktails.add(CocktailModel('idd', 'Koktail1', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123));
-    cocktails.add(CocktailModel('idd', 'Koktail2 ', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123));
-    cocktails.add(CocktailModel('idd', 'Koktail3 bla bla bla', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123));
-    cocktails.add(CocktailModel('idd', 'Koktail4 bla bla bla', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123));
-    cocktails.add(CocktailModel('idd', 'Koktail5 bla bla bla', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123));
-    cocktails.add(CocktailModel('idd', 'Koktail2 bla bla bla', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123));
-    cocktails.add(CocktailModel('idd', 'Koktail67 bla bla bla', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123));
-    cocktails.add(CocktailModel('idd', 'Koktail2 bla bla bla', 'saijdnaj', 'assets/kakao_daktyle.jpg', new List(2), new List(2), 123));
+  _showLoading() => Container(
+      alignment: Alignment.center,
+      child: CircularProgressIndicator(
+        valueColor: AlwaysStoppedAnimation<Color>(mAccentColor),
+      )
+  );
 
-    return cocktails;
+  List<Widget> _createCocktailList() {
+    List<Widget> list = new List<Widget>();
+
+    _categories.forEach((category) {
+      list.add(CardList(category.cocktails.toList(), _myFavourites));
+    });
+
+    return list;
   }
 
+  List<Widget> _createAllTabs() {
+    List<Widget> tabs = new List<Widget>();
+
+    _categories.forEach((category) {
+      tabs.add(_createTab(category.name));
+    });
+
+    return tabs;
+  }
 
   _createTab(String title) => Padding(
         padding: EdgeInsets.only(left: 20.0),
@@ -113,4 +142,45 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           ),
         ));
 
+  Future<List<FavouriteModel>> getAllFavouriteCocktails() async {
+    List<FavouriteModel> favourites = List<FavouriteModel>();
+
+    favourites = await _databaseProvider.getAllFavourites();
+
+    debugPrint("All Favourites ?? $favourites");
+
+    debugPrint("End of getting data from database");
+
+    return favourites;
+  }
+
+  void _getCocktailsFromFirebase() {
+    if(_categories.isEmpty) {
+      _firestore.getCategories().then((categories) {
+        _categories = categories;
+      }).whenComplete(() {
+
+        getAllFavouriteCocktails().then((favourites) {
+          if(favourites.isNotEmpty) {
+            _categories.forEach((category) {
+              category.cocktails.forEach((cocktail) {
+                favourites.forEach((favourite) {
+                  if (favourite.cocktailId == cocktail.id) {
+                    cocktail.isFavourite = true;
+                    _myFavourites.add(cocktail);
+                  }
+                });
+              });
+            });
+          }
+
+          setState(() {
+            allDataReceived = true;
+            _tabController = new TabController(length: _categories.length, vsync: this);
+          });
+        });
+
+      });
+    }
+  }
 }
