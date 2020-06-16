@@ -5,72 +5,81 @@ import 'package:koktejo/constants.dart';
 import 'package:koktejo/models/cocktail_model.dart';
 import 'package:koktejo/models/favourite_model.dart';
 import 'package:koktejo/pages/details_page.dart';
+import 'package:koktejo/providers/cocktails_info.dart';
 import 'package:koktejo/providers/database_provider.dart';
+import 'package:provider/provider.dart';
 
 class CardList extends StatefulWidget {
 
-  final List<CocktailModel> _cocktails;
-  final List<CocktailModel> _myFavourites;
 
-  CardList(this._cocktails, [this._myFavourites]);
+  bool _favouriteList = false;
+  int _categoryIndex = 0;
+
+  CardList(this._categoryIndex);
+
+  CardList.favouriteList() {
+    this._favouriteList = true;
+  }
+
 
   @override
   State<StatefulWidget> createState() {
-    return CardListState(_cocktails);
+    return CardListState();
   }
 }
 
 class CardListState extends State<CardList> {
 
   final DatabaseProvider _databaseProvider = DatabaseProvider();
-
-  final List<CocktailModel> _cocktails;
+  var cocktailsInfo;
   bool darkMode = false;
 
-  CardListState(this._cocktails);
+  CardListState();
 
   @override
   void initState() {
-    super.initState();
-
     var brightness = SchedulerBinding.instance.window.platformBrightness;
     darkMode = brightness == Brightness.dark;
+    cocktailsInfo = Provider.of<CocktailsInfo>(context, listen: false);
+
+    super.initState();
 
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Stack(
-        //padding: EdgeInsets.only(left: 20.0),
         children: <Widget>[
-
-          //SizedBox(height: 15.0),
-
           Positioned(
             top: 15.0,
             right: 15.0,
             left: 15.0,
             bottom: 0.0,
-            child: GridView.count(
-                crossAxisCount: 2,
-                primary: false,
-                crossAxisSpacing: 10.0,
-                mainAxisSpacing: 15.0,
-                childAspectRatio: 0.8,
-                children: _buildAllCards(context)),
+            child: Consumer<CocktailsInfo>(
+              builder: (con, data, child) {
+                return GridView.count(
+                    crossAxisCount: 2,
+                    primary: false,
+                    crossAxisSpacing: 10.0,
+                    mainAxisSpacing: 15.0,
+                    childAspectRatio: 0.8,
+                    children: _buildAllCards(context, data)
+                );
+              },
+            )
           )
-
         ],
       ),
     );
   }
 
-  List<Widget> _buildAllCards(BuildContext context) {
+  List<Widget> _buildAllCards(BuildContext context, CocktailsInfo data) {
     List<Widget> widgets = List<Widget>();
     int index = 0;
-    for(CocktailModel cocktail in _cocktails) {
+    for(CocktailModel cocktail in widget._favouriteList ? data.myFavourites : data.categories[widget._categoryIndex].cocktails) {
       widgets.add(_buildCardView(index, cocktail, true, context));
       index++;
     }
@@ -159,40 +168,40 @@ class CardListState extends State<CardList> {
 
   Widget _favouriteIcon(CocktailModel cocktail) {
 
-    return GestureDetector(
-      onTap: () {
+    return Consumer<CocktailsInfo>(
+      builder: (context, data, child) {
+        return GestureDetector(
+          onTap: () {
 
-        if(!cocktail.isFavourite)  {
-          _addToFavourites(cocktail.id).then((success) {
-            setState(()  {
-              cocktail.isFavourite = true;
-              widget._myFavourites.add(cocktail);
-            });
-          });
-        } else {
-          _removeFromFavourites(cocktail.id).then((success) {
-            setState(()  {
-              cocktail.isFavourite = false;
-              widget._myFavourites.remove(cocktail);
-            });
-          });
-        }
+            if(!cocktail.isFavourite)  {
+              _addToFavourites(cocktail.id).then((success) {
+                cocktail.isFavourite = true;
+                data.addToFavourites(cocktail);
+              });
+            } else {
+              _removeFromFavourites(cocktail.id).then((success) {
+                cocktail.isFavourite = false;
+                data.removeFromFavourites(cocktail);
+              });
+            }
 
 
-      },
-      child: Padding(
-        padding: EdgeInsets.all(
-            5.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: <Widget>[
-            cocktail.isFavourite ? Icon(
-                Icons.favorite, color: mAccentColor) :
-            Icon(
-                Icons.favorite_border, color: mAccentColor)
-          ],
-        ),
-      ),
+          },
+          child: Padding(
+            padding: EdgeInsets.all(
+                5.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                cocktail.isFavourite ? Icon(
+                    Icons.favorite, color: mAccentColor) :
+                Icon(
+                    Icons.favorite_border, color: mAccentColor)
+              ],
+            ),
+          ),
+        );
+      }
     );
   }
   

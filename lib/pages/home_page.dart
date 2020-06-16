@@ -1,8 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:koktejo/constants.dart';
-import 'package:koktejo/models/cocktail_category.dart';
-import 'package:koktejo/models/cocktail_model.dart';
 import 'package:koktejo/models/favourite_model.dart';
 import 'package:koktejo/pages/favourites_page.dart';
 import 'package:koktejo/providers/cocktails_info.dart';
@@ -21,30 +19,22 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+
   TabController _tabController;
   final FirestoreProvider _firestore = new FirestoreProvider();
   final DatabaseProvider _databaseProvider = DatabaseProvider();
-
-  List<CocktailCategory> _categories = List<CocktailCategory>();
-  List<CocktailModel> _myFavourites = List<CocktailModel>();
+  var cocktailsInfo;
 
   bool allDataReceived = false;
 
   @override
   void initState() {
-    var cocktailsInfo = Provider.of<CocktailsInfo>(context);
+    cocktailsInfo = Provider.of<CocktailsInfo>(context, listen: false);
+    _tabController = TabController(length: 0, vsync: this);
+    _getCocktailsFromFirebase();
 
     super.initState();
-    _tabController = TabController(length: 0, vsync: this);
 
-    _getCocktailsFromFirebase();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _categories.clear();
-    _myFavourites.clear();
   }
 
   @override
@@ -54,17 +44,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           backgroundColor: Colors.transparent,
           elevation: 0.0,
           centerTitle: true,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back),
-            onPressed: () {},
-          ),
           title: Text(widget.title, style: TextStyle(fontFamily: 'Varela', fontSize: 20.0)),
           actions: <Widget>[
             IconButton(
               icon: Icon(Icons.favorite_border, color: mAccentColor),
               onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) {
-                  return FavouritesPage(_myFavourites);
+                  return FavouritesPage();
                 }));
               },
             ),
@@ -115,9 +101,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   List<Widget> _createCocktailList() {
     List<Widget> list = new List<Widget>();
-
-    _categories.forEach((category) {
-      list.add(CardList(category.cocktails.toList(), _myFavourites));
+    int index = 0;
+    cocktailsInfo.categories.forEach((category) {
+      list.add(CardList(index));
+      index++;
     });
 
     return list;
@@ -126,7 +113,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   List<Widget> _createAllTabs() {
     List<Widget> tabs = new List<Widget>();
 
-    _categories.forEach((category) {
+    cocktailsInfo.categories.forEach((category) {
       tabs.add(_createTab(category.name));
     });
 
@@ -147,36 +134,31 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     favourites = await _databaseProvider.getAllFavourites();
 
-    debugPrint("All Favourites ?? $favourites");
-
-    debugPrint("End of getting data from database");
-
     return favourites;
   }
 
   void _getCocktailsFromFirebase() {
-    if(_categories.isEmpty) {
+    if(cocktailsInfo.categories.isEmpty) {
       _firestore.getCategories().then((categories) {
-        _categories = categories;
+        cocktailsInfo.categories = categories;
       }).whenComplete(() {
 
         getAllFavouriteCocktails().then((favourites) {
           if(favourites.isNotEmpty) {
-            _categories.forEach((category) {
+            cocktailsInfo.categories.forEach((category) {
               category.cocktails.forEach((cocktail) {
                 favourites.forEach((favourite) {
                   if (favourite.cocktailId == cocktail.id) {
                     cocktail.isFavourite = true;
-                    _myFavourites.add(cocktail);
+                    cocktailsInfo.myFavourites.add(cocktail);
                   }
                 });
               });
             });
           }
-
           setState(() {
             allDataReceived = true;
-            _tabController = new TabController(length: _categories.length, vsync: this);
+            _tabController = new TabController(length: cocktailsInfo.categories.length, vsync: this);
           });
         });
 

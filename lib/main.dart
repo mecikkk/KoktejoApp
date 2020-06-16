@@ -10,29 +10,24 @@ class KoktejoApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Koktejo',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.light,
-        primaryColor: mAccentColor,
-        primaryColorBrightness: Brightness.light,
-        cardColor: Color.fromRGBO(240, 240, 240, 1.0),
-        fontFamily: 'Varela'
-      ),
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        primaryColor: mAccentColor,
-        primaryColorBrightness: Brightness.dark,
-        cardColor: Colors.black38,
-          fontFamily: 'Varela'
-      ),
-      home: ChangeNotifierProvider(
+    return ChangeNotifierProvider(
         create: (context) => CocktailsInfo(),
-        child: HomePage(title: 'Koktejo'),
-      )
-    );
+        child: MaterialApp(
+          title: 'Koktejo',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+              brightness: Brightness.light,
+              primaryColor: mAccentColor,
+              primaryColorBrightness: Brightness.light,
+              cardColor: Color.fromRGBO(240, 240, 240, 1.0),
+              fontFamily: 'Varela'),
+          darkTheme: ThemeData(
+              brightness: Brightness.dark,
+              primaryColor: mAccentColor,
+              primaryColorBrightness: Brightness.dark,
+              cardColor: Colors.black38,
+              fontFamily: 'Varela'),
+          home: HomePage(title: 'Koktejo'),
+        ));
   }
 }
-
-
